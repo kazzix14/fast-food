@@ -1,4 +1,4 @@
-use clap::{ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command};
 use serde::{Deserialize, Serialize};
 use std::process::Command as ProcessCommand;
 use std::{env, fs, path::PathBuf};
@@ -33,23 +33,9 @@ impl CommandConfig {
     }
 }
 
-fn load_config() -> Vec<CommandConfig> {
-    let config_dir = env::var("XDG_CONFIG_HOME")
-        .ok()
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            env::var("HOME")
-                .map(|home| PathBuf::from(home).join(".config"))
-                .expect("Could not determine home directory")
-        });
-
-    let app_config_dir = config_dir.join("fast-food");
-    fs::create_dir_all(&app_config_dir).expect("Failed to create configuration directory");
-
-    let config_path = app_config_dir.join("config.yaml");
+fn load_config(config_path: PathBuf) -> Vec<CommandConfig> {
     let yaml = fs::read_to_string(&config_path)
         .expect(&format!("Failed to read {}", config_path.to_string_lossy()));
-
     serde_yaml::from_str(&yaml).expect("Failed to parse YAML")
 }
 
@@ -92,8 +78,37 @@ fn execute_command(matches: &ArgMatches, config: &[CommandConfig]) {
 }
 
 fn main() {
-    let config = load_config();
+    let matches = Command::new("fast-food")
+        .arg_required_else_help(true)
+        .arg(
+            Arg::new("config")
+                .short('c')
+                .long("config")
+                .value_name("FILE")
+                .help("Sets a custom config file"),
+        )
+        .get_matches();
+
+    // Determine the configuration file path
+    let config_path = matches.get_one::<String>("config").map_or_else(
+        || {
+            let config_dir = env::var("XDG_CONFIG_HOME")
+                .ok()
+                .map(PathBuf::from)
+                .unwrap_or_else(|| {
+                    env::var("HOME")
+                        .map(|home| PathBuf::from(home).join(".config"))
+                        .expect("Could not determine home directory")
+                });
+            config_dir.join("fast-food").join("config.yaml")
+        },
+        |path| PathBuf::from(path),
+    );
+
+    let config = load_config(config_path);
     let app = build_app(&config);
-    let matches = app.get_matches();
-    execute_command(&matches, &config);
+    let app_matches = app.get_matches();
+    execute_command(&app_matches, &config);
 }
+
+// The `build_app` and `execute_command` functions remain unchanged
