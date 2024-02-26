@@ -1,0 +1,6 @@
+- name: dc
+  subs:
+    - name: st
+      subs:
+        - name: all
+          command: "docker ps --no-trunc | sed '1d' | grep -v gitlab-runner | awk '{print $1}'"
