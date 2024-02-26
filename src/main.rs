@@ -119,5 +119,3 @@ fn main() {
     let app_matches = app.get_matches_from(args());
     execute_command(&app_matches, &config);
 }
-
-// The `build_app` and `execute_command` functions remain unchanged
