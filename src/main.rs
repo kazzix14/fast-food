@@ -8,12 +8,13 @@ use std::process::Command as ProcessCommand;
 struct CommandConfig {
     name: String,
     command: Option<String>,
+    description: Option<String>, // Add a description field
     subs: Option<Vec<CommandConfig>>,
 }
 
 fn build_command(cmd_config: CommandConfig) -> Command {
-    let mut cmd =
-        Command::new(cmd_config.name.clone()).about(cmd_config.command.clone().unwrap_or_default());
+    let mut cmd = Command::new(cmd_config.name.clone())
+        .about(cmd_config.description.clone().unwrap_or(String::from("No description available"))); // Use description here
 
     if let Some(ref subs) = cmd_config.subs {
         for sub in subs {
@@ -40,19 +41,14 @@ fn main() {
 
     let matches = app.get_matches();
 
-    execute_command(matches, &config);
+    execute_command(&matches, &config);
 }
 
-fn execute_command(matches: ArgMatches, config: &Vec<CommandConfig>) {
+fn execute_command(matches: &ArgMatches, config: &Vec<CommandConfig>) {
     if let Some(name) = matches.subcommand_name() {
         for cmd_config in config {
-            //if let Some(subs) = &cmd_config.subs {
-            //    dbg!(&name);
-            //    execute_command(name, subs);
-            //}
             if cmd_config.name == name {
-                // Split the command from the arguments
-                if let Some(command) = cmd_config.command.clone() {
+                if let Some(command) = &cmd_config.command {
                     println!("Executing command: {}", command);
                     let parts: Vec<&str> = command.split_whitespace().collect();
                     let (command, args) = parts.split_first().unwrap();
@@ -66,8 +62,8 @@ fn execute_command(matches: ArgMatches, config: &Vec<CommandConfig>) {
                     // Print the output
                     println!("Output: {}", String::from_utf8_lossy(&output.stdout));
                 }
-                if let Some(matches) = matches.subcommand_matches(name) {
-                    execute_command(matches.clone(), config);
+                if let Some(sub_matches) = matches.subcommand_matches(name) {
+                    execute_command(sub_matches, &cmd_config.subs.as_ref().unwrap_or(&vec![]));
                 }
                 break;
             }
