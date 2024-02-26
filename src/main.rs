@@ -13,8 +13,16 @@ struct CommandConfig {
 }
 
 fn build_command(cmd_config: CommandConfig) -> Command {
-    let mut cmd = Command::new(cmd_config.name.clone())
-        .about(cmd_config.description.clone().unwrap_or(String::from("No description available"))); // Use description here
+    let mut cmd = Command::new(cmd_config.name.clone()).about(
+        cmd_config
+            .description
+            .clone()
+            .unwrap_or_else(|| String::from("No description available")),
+    ); // Use description here
+
+    if cmd_config.command.is_none() {
+        cmd = cmd.arg_required_else_help(true);
+    }
 
     if let Some(ref subs) = cmd_config.subs {
         for sub in subs {
@@ -32,7 +40,7 @@ fn main() {
     // Directly deserialize YAML into a Vec<CommandConfig>
     let config: Vec<CommandConfig> = serde_yaml::from_str(&yaml).expect("Failed to parse YAML");
 
-    let mut app = Command::new("fastfood");
+    let mut app = Command::new("fastfood").arg_required_else_help(true);
 
     for cmd_config in config.clone() {
         let cmd = build_command(cmd_config);
@@ -49,18 +57,24 @@ fn execute_command(matches: &ArgMatches, config: &Vec<CommandConfig>) {
         for cmd_config in config {
             if cmd_config.name == name {
                 if let Some(command) = &cmd_config.command {
-                    println!("Executing command: {}", command);
-                    let parts: Vec<&str> = command.split_whitespace().collect();
-                    let (command, args) = parts.split_first().unwrap();
+                    println!("Executing command: `{}`", command);
 
-                    // Execute the command
-                    let output = ProcessCommand::new(command)
-                        .args(args)
-                        .output()
-                        .expect("Failed to execute command");
+                    // Execute the command using a shell
+                    let output = if cfg!(target_os = "windows") {
+                        ProcessCommand::new("cmd")
+                            .args(&["/C", command])
+                            .output()
+                            .expect("Failed to execute command")
+                    } else {
+                        ProcessCommand::new("sh")
+                            .arg("-c")
+                            .arg(command)
+                            .output()
+                            .expect("Failed to execute command")
+                    };
 
                     // Print the output
-                    println!("status: {}", &output.status.to_string());
+                    println!("status: {}", &output.status);
                     println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
                     println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
                 }

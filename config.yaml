@@ -1,6 +1,9 @@
 - name: dc
+  description: docker
   subs:
     - name: st
+      description: stop
       subs:
         - name: all
+          description: stop all containers except gitlab-runner
           command: "docker ps --no-trunc | sed '1d' | grep -v gitlab-runner | awk '{print $1}'"
