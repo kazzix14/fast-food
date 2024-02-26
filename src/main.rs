@@ -1,8 +1,8 @@
 use clap::{ArgMatches, Command};
 use serde::{Deserialize, Serialize};
 use serde_yaml;
-use std::fs;
 use std::process::Command as ProcessCommand;
+use std::{env, fs, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct CommandConfig {
@@ -35,12 +35,32 @@ fn build_command(cmd_config: CommandConfig) -> Command {
 }
 
 fn main() {
-    let yaml = fs::read_to_string("config.yaml").expect("Failed to read config.yaml");
+    // Determine the XDG_CONFIG_HOME or default to $HOME/.config
+    let config_dir = env::var("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            env::var("HOME")
+                .map(|home| PathBuf::from(home).join(".config"))
+                .expect("Could not determine home directory")
+        });
+
+    // Specify your application's configuration directory name
+    let app_config_dir = config_dir.join("fast-food");
+
+    // Ensure the configuration directory exists or create it
+    if !app_config_dir.exists() {
+        fs::create_dir_all(&app_config_dir).expect("Failed to create configuration directory");
+    }
+
+    // Specify the path to the configuration file
+    let config_path = app_config_dir.join("config.yaml");
+
+    let yaml = fs::read_to_string(config_path.clone()).expect(&format!("Failed to read {}", config_path.to_string_lossy()));
 
     // Directly deserialize YAML into a Vec<CommandConfig>
     let config: Vec<CommandConfig> = serde_yaml::from_str(&yaml).expect("Failed to parse YAML");
 
-    let mut app = Command::new("fastfood").arg_required_else_help(true);
+    let mut app = Command::new("fast-food").arg_required_else_help(true);
 
     for cmd_config in config.clone() {
         let cmd = build_command(cmd_config);
