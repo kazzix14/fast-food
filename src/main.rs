@@ -39,8 +39,8 @@ fn load_config(config_path: PathBuf) -> Vec<CommandConfig> {
     serde_yaml::from_str(&yaml).expect("Failed to parse YAML")
 }
 
-fn build_app(config: &[CommandConfig]) -> Command {
-    let mut app = Command::new("fast-food").arg_required_else_help(true);
+fn build_app(from: Command, config: &[CommandConfig]) -> Command {
+    let mut app = from.subcommand_required(true);
 
     for cmd_config in config {
         app = app.subcommand(cmd_config.to_command());
@@ -78,8 +78,9 @@ fn execute_command(matches: &ArgMatches, config: &[CommandConfig]) {
 }
 
 fn main() {
-    let matches = Command::new("fast-food")
+    let app = Command::new("fast-food")
         .arg_required_else_help(true)
+        .subcommand_precedence_over_arg(true)
         .arg(
             Arg::new("config")
                 .short('c')
@@ -87,7 +88,9 @@ fn main() {
                 .value_name("FILE")
                 .help("Sets a custom config file"),
         )
-        .get_matches();
+        .allow_external_subcommands(true);
+
+    let matches = app.clone().get_matches();
 
     // Determine the configuration file path
     let config_path = matches.get_one::<String>("config").map_or_else(
@@ -106,7 +109,7 @@ fn main() {
     );
 
     let config = load_config(config_path);
-    let app = build_app(&config);
+    let app = build_app(app, &config);
     let app_matches = app.get_matches();
     execute_command(&app_matches, &config);
 }
