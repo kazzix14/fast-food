@@ -60,7 +60,9 @@ fn execute_command(matches: &ArgMatches, config: &Vec<CommandConfig>) {
                         .expect("Failed to execute command");
 
                     // Print the output
-                    println!("Output: {}", String::from_utf8_lossy(&output.stdout));
+                    println!("status: {}", &output.status.to_string());
+                    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+                    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
                 }
                 if let Some(sub_matches) = matches.subcommand_matches(name) {
                     execute_command(sub_matches, &cmd_config.subs.as_ref().unwrap_or(&vec![]));
