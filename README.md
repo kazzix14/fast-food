@@ -15,47 +15,40 @@ Fastfood is a CLI tool designed to make your command line experience as easy and
 
 Before you begin, ensure you have the following installed:
 - A Unix-like operating system: macOS, Linux, BSD.
+- Rust programming language and Cargo (Rust's package manager).
 
 ### Installation
+To install `fast-food` from crates.io, simply run the following command:
 
-1. Clone the `fast-food` repository:
-```^sh
-git clone https://github.com/yourusername/fast-food.git
-```^
+```sh
+cargo install fast-food
+```
 
-2. Change into the `fast-food` directory:
-```^sh
-cd fast-food
-```^
-
-3. Install `fast-food` using the setup script:
-```^sh
-./setup install
-```^
+This will download and install the latest version of `fast-food` directly from crates.io, making it available to run from anywhere on your system.
 
 ### Configuration
 
 To configure your shortcuts using the updated configuration format, edit the `config.yaml` file in the `fast-food` directory with your desired command shortcuts and their respective configurations. Here's an updated example configuration reflecting the new structure:
 
-```^yaml
+```yaml
 - name: dc
   description: docker
   subs:
-    - name: st
-      description: stop
-      subs:
-        - name: all
-          description: stop all containers except gitlab-runner
-          command: "docker ps --no-trunc | sed '1d' | grep -v gitlab-runner | awk '{print $1}'"
-```^
+  - name: st
+    description: stop
+    subs:
+      - name: all
+        description: stop all containers except gitlab-runner
+        command: "docker ps --no-trunc | sed '1d' | grep -v gitlab-runner | awk '{print $1}'"
+```
 
 ### Usage
 
 To use a shortcut, simply type `ff` followed by your command shortcut. For example, to execute the `ls` command using the shortcut defined in your `config.yaml`:
 
-```^sh
+```sh
 ff ls
-```^
+```
 
 This will execute the `ls` command using the shortcut defined in your configuration file.
 
@@ -71,3 +64,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 - Inspired by the convenience of fast food and the desire to streamline command-line operations.
 - Thanks to all contributors who help make `fast-food` better.
+
