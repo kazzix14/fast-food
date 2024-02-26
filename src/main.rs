@@ -20,7 +20,6 @@ impl CommandConfig {
                     .clone()
                     .unwrap_or(String::from("No description available")),
             )
-            .arg_required_else_help(true)
             .flatten_help(false)
             .disable_help_flag(false)
             .disable_help_subcommand(true);
@@ -58,26 +57,57 @@ fn build_app(from: Command, config: &[CommandConfig]) -> Command {
 fn execute_command(matches: &ArgMatches, config: &[CommandConfig]) {
     if let Some(name) = matches.subcommand_name() {
         if let Some(cmd_config) = config.iter().find(|c| c.name == name) {
-            if let Some(command) = &cmd_config.command {
-                let output = if cfg!(target_os = "windows") {
-                    ProcessCommand::new("cmd")
-                        .args(&["/C", command])
-                        .output()
-                        .expect("Failed to execute command")
-                } else {
-                    ProcessCommand::new("sh")
-                        .arg("-c")
-                        .arg(command)
-                        .output()
-                        .expect("Failed to execute command")
-                };
+            match cmd_config {
+                CommandConfig {
+                    name,
+                    command: None,
+                    subs: None,
+                    ..
+                } => {
+                    println!("No command or subcommands found for `{}`", name);
+                }
+                CommandConfig {
+                    name,
+                    command: Some(_),
+                    subs: Some(_),
+                    ..
+                } => {
+                    println!("`command` and `subs` are exclusive. subject: `{}`", name);
+                }
+                CommandConfig {
+                    name,
+                    command: None,
+                    subs: Some(subs),
+                    ..
+                } => {
+                    execute_command(
+                        matches.subcommand_matches(name).expect("No subcommand"),
+                        &subs,
+                    );
+                }
+                CommandConfig {
+                    command: Some(command),
+                    subs: None,
+                    ..
+                } => {
+                    println!(r#"Executing command: "{}""#, command);
+                    let output = if cfg!(target_os = "windows") {
+                        ProcessCommand::new("cmd")
+                            .args(&["/C", command])
+                            .output()
+                            .expect("Failed to execute command")
+                    } else {
+                        ProcessCommand::new("sh")
+                            .arg("-c")
+                            .arg(command)
+                            .output()
+                            .expect("Failed to execute command")
+                    };
 
-                println!("status: {}", &output.status);
-                println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-                println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-            }
-            if let Some(sub_matches) = matches.subcommand_matches(name) {
-                execute_command(sub_matches, cmd_config.subs.as_deref().unwrap_or(&[]));
+                    println!("status: {}", &output.status);
+                    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+                    println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+                }
             }
         }
     }
