@@ -13,14 +13,19 @@ struct CommandConfig {
 
 impl CommandConfig {
     fn to_command(&self) -> Command {
-        let mut cmd = Command::new(&self.name).about(
-            self.description
-                .clone()
-                .unwrap_or(String::from("No description available")),
-        );
+        let mut cmd = Command::new(&self.name)
+            .about(
+                self.description
+                    .clone()
+                    .unwrap_or(String::from("No description available")),
+            )
+            .arg_required_else_help(true)
+            .flatten_help(false)
+            .disable_help_flag(false)
+            .disable_help_subcommand(true);
 
         if self.command.is_none() {
-            cmd = cmd.arg_required_else_help(true);
+            cmd = cmd.subcommand_required(true).arg_required_else_help(true);
         }
 
         if let Some(subs) = &self.subs {
@@ -79,7 +84,7 @@ fn execute_command(matches: &ArgMatches, config: &[CommandConfig]) {
 
 fn main() {
     let app = Command::new("fast-food")
-        .arg_required_else_help(true)
+        .flatten_help(false)
         .subcommand_precedence_over_arg(true)
         .arg(
             Arg::new("config")
