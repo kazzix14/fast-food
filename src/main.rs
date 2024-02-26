@@ -1,5 +1,6 @@
 use clap::{Arg, ArgMatches, Command};
 use serde::{Deserialize, Serialize};
+use std::env::args;
 use std::process::Command as ProcessCommand;
 use std::{env, fs, path::PathBuf};
 
@@ -115,7 +116,7 @@ fn main() {
 
     let config = load_config(config_path);
     let app = build_app(app, &config);
-    let app_matches = app.get_matches();
+    let app_matches = app.get_matches_from(args());
     execute_command(&app_matches, &config);
 }
 
