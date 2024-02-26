@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Kazuma Murata <kazzix14@gmail.com>"]
 license = "MIT"
-description = "A CLI tool to simplify command usage through shortcuts, like fast food."
+description = "A CLI tool to simplify command usage through shortcuts"
 repository = "https://github.com/kazzix14/fast-food"
 readme = "README.md"
 
