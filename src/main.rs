@@ -186,4 +186,26 @@ mod tests {
             .success()
             .stdout(predicate::str::contains("Hello, world!"));
     }
+
+    #[test]
+    fn test_command_with_subcommands() {
+        let config = r#"
+    - name: parent
+      description: Parent command
+      subs:
+        - name: child
+          command: echo "Executed child command"
+          description: Child command
+    "#;
+
+        // Test parent command without invoking subcommands (should prompt for subcommand because it's required)
+        run_app_with_config(config, &["parent"])
+            .failure() // Assuming it fails because no subcommand was provided and it's required
+            .stderr(predicate::str::contains(r#"Usage"#));
+
+        // Test executing the child subcommand
+        run_app_with_config(config, &["parent", "child"])
+            .success()
+            .stdout(predicate::str::contains("Executed child command"));
+    }
 }
