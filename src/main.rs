@@ -149,3 +149,41 @@ fn main() {
     let app_matches = app.get_matches_from(args());
     execute_command(&app_matches, &config);
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+    use predicates::prelude::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    fn run_app_with_config(config: &str, args: &[&str]) -> assert_cmd::assert::Assert {
+        let mut config_file = NamedTempFile::new().expect("Failed to create temp file");
+        writeln!(config_file, "{}", config).expect("Failed to write config to temp file");
+
+        let config_path = config_file
+            .path()
+            .to_str()
+            .expect("Failed to convert path to str");
+
+        Command::cargo_bin("fast-food")
+            .expect("Main binary not found")
+            .arg("--config")
+            .arg(config_path)
+            .args(args)
+            .assert()
+    }
+
+    #[test]
+    fn test_command_without_subcommands() {
+        let config = r#"
+    - name: hello
+      command: echo "Hello, world!"
+      description: Print Hello, world!
+    "#;
+
+        run_app_with_config(config, &["hello"])
+            .success()
+            .stdout(predicate::str::contains("Hello, world!"));
+    }
+}

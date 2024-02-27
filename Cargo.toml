@@ -11,6 +11,9 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+assert_cmd = "2.0.14"
 clap = { version = "4.5.1", features = ["string"] }
+predicates = "3.1.0"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_yaml = "0.9.32"
+tempfile = "3.10.1"
